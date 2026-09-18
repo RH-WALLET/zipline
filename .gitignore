@@ -1,0 +1,32 @@
+# secrets
+.env
+.env.*
+!.env.example
+
+# python
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+services/engine/data/
+services/engine/.zipline/
+
+# node
+node_modules/
+.next/
+out/
+apps/web/test-results/
+apps/web/playwright-report/
+apps/web/.playwright/
+*.tsbuildinfo
+next-env.d.ts
+
+# os / editor
+.DS_Store
+.idea/
+.vscode/

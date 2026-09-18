@@ -1,0 +1,19 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "web",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--dir", "apps/web", "dev", "--port", "3000"],
+      "port": 3000,
+      "env": { "ENGINE_URL": "http://127.0.0.1:8000" }
+    },
+    {
+      "name": "engine",
+      "runtimeExecutable": "services/engine/.venv/bin/uvicorn",
+      "runtimeArgs": ["zipline_engine.api.app:app", "--port", "8000", "--app-dir", "services/engine"],
+      "port": 8000,
+      "env": { "DATABASE_URL": "postgresql+psycopg://zipline:zipline@localhost:5433/zipline" }
+    }
+  ]
+}

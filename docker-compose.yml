@@ -1,0 +1,74 @@
+name: zipline
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: zipline
+      POSTGRES_PASSWORD: zipline
+      POSTGRES_DB: zipline
+    ports:
+      - "${DB_PORT:-5433}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U zipline -d zipline"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  engine:
+    build:
+      context: ./services/engine
+    env_file:
+      - path: ./.env
+        required: false
+    environment:
+      DATABASE_URL: postgresql+psycopg://zipline:zipline@db:5432/zipline
+      HISTORY_CACHE_DIR: /data/history
+    command: >
+      sh -c "alembic upgrade head && zl bootstrap && uvicorn zipline_engine.api.app:app --host 0.0.0.0 --port 8000"
+    ports:
+      - "8000:8000"
+    volumes:
+      - enginedata:/data
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/health').status==200 else 1)\""]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  worker:
+    build:
+      context: ./services/engine
+    env_file:
+      - path: ./.env
+        required: false
+    environment:
+      DATABASE_URL: postgresql+psycopg://zipline:zipline@db:5432/zipline
+      HISTORY_CACHE_DIR: /data/history
+    command: zl worker
+    volumes:
+      - enginedata:/data
+    depends_on:
+      engine:
+        condition: service_healthy
+
+  web:
+    build:
+      context: ./apps/web
+    environment:
+      ENGINE_URL: http://engine:8000
+      PORT: "3000"
+    ports:
+      - "3000:3000"
+    depends_on:
+      engine:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  enginedata:
