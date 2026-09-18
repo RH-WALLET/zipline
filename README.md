@@ -233,6 +233,28 @@ Admin (`Authorization: Bearer $ADMIN_TOKEN`): `POST /admin/pause` `POST /admin/r
 
 ## Deploying
 
+### Fly.io (the reference deployment)
+
+The public instance runs on Fly.io: web at https://zipline-rh-web.fly.dev, engine API at https://zipline-rh-engine.fly.dev (`/docs`). Config lives in `services/engine/fly.toml` (two process groups: `api` and `worker`, release command runs migrations + bootstrap) and `apps/web/fly.toml`. To reproduce under your own account:
+
+```bash
+fly apps create <engine-app> && fly apps create <web-app>
+fly postgres create --name <db-app> --region iad --initial-cluster-size 1 --vm-size shared-cpu-1x --volume-size 1
+fly postgres attach <db-app> --app <engine-app>                 # sets DATABASE_URL (postgres://… is normalized to psycopg)
+fly secrets set ADMIN_TOKEN=$(openssl rand -hex 32) --app <engine-app>
+# edit the app names in both fly.toml files, then:
+fly deploy --config services/engine/fly.toml --remote-only
+fly ips allocate-v4 --shared --app <engine-app> && fly ips allocate-v6 --app <engine-app>
+fly scale count api=1 worker=1 --app <engine-app>
+fly deploy --config apps/web/fly.toml --remote-only              # ENGINE_URL points at the engine's fly.dev URL
+fly ips allocate-v4 --shared --app <web-app> && fly ips allocate-v6 --app <web-app>
+fly ssh console --app <engine-app> -C "zl run-cycle"           # first cycle now instead of waiting for 16:20 ET
+```
+
+Going live on Fly: `fly secrets set RH_RPC_URL=… EXECUTOR_ADDRESS=… EXECUTOR_PRIVATE_KEY=… ZEROX_API_KEY=… --app <engine-app>`, set `TREASURY_MODE=onchain` (and later `LIVE_TRADING=true`) in `services/engine/fly.toml` `[env]`, redeploy. Redeploys re-run migrations and the idempotent bootstrap.
+
+### Any VPS
+
 A single VPS is enough:
 
 ```bash

@@ -102,6 +102,16 @@ class Settings(BaseSettings):
     def _strip_addr(cls, v: str) -> str:
         return v.strip()
 
+    @field_validator("database_url")
+    @classmethod
+    def _psycopg_scheme(cls, v: str) -> str:
+        """Hosting providers hand out ``postgres://`` URLs; SQLAlchemy needs the psycopg driver named."""
+        v = v.strip()
+        for prefix in ("postgres://", "postgresql://"):
+            if v.startswith(prefix):
+                return "postgresql+psycopg://" + v[len(prefix) :]
+        return v
+
     # ------------------------------------------------------------------------
     @property
     def allowlist(self) -> list[str]:

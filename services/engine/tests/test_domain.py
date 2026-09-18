@@ -254,3 +254,12 @@ def test_withdrawal_deallocation_prefers_buffer_then_sleeve_cash() -> None:
     assert books["A"].allocated_capital == D("262.5")  # a withdrawal is not a loss
     with pytest.raises(ValueError):
         allocator.deallocate(D(10000), books, buffer_cash=D(0))
+
+
+def test_database_url_scheme_is_normalized_for_psycopg() -> None:
+    s = Settings(database_url="postgres://u:p@host:5432/db?sslmode=disable", _env_file=None)  # type: ignore[call-arg]
+    assert s.database_url == "postgresql+psycopg://u:p@host:5432/db?sslmode=disable"
+    s = Settings(database_url="postgresql://u:p@host/db", _env_file=None)  # type: ignore[call-arg]
+    assert s.database_url == "postgresql+psycopg://u:p@host/db"
+    s = Settings(database_url="postgresql+psycopg://u:p@host/db", _env_file=None)  # type: ignore[call-arg]
+    assert s.database_url == "postgresql+psycopg://u:p@host/db"
