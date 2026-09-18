@@ -1,5 +1,7 @@
 # ZIPLINE
 
+[![ci](https://github.com/RH-WALLET/zipline/actions/workflows/ci.yml/badge.svg)](https://github.com/RH-WALLET/zipline/actions/workflows/ci.yml)
+
 **ZIPLINE IS RUNNING AGAIN.**
 The open-source Quantopian engine, reconnected to real markets on Robinhood Chain.
 
@@ -89,7 +91,7 @@ net external      +4%   one BUY order on 0x, attributed pro rata to TREND and MO
 Prerequisites: Docker (with Compose), or for native development Python 3.12, Node 22+, pnpm 11, Postgres.
 
 ```bash
-git clone <this repo> zipline && cd zipline
+git clone https://github.com/RH-WALLET/zipline.git && cd zipline
 cp .env.example .env            # defaults are DEMO MODE with a simulated treasury
 docker compose up --build       # db + engine (migrates, bootstraps) + worker + web
 ```
@@ -235,7 +237,7 @@ A single VPS is enough:
 
 ```bash
 # on the server
-git clone <repo> && cd zipline && cp .env.example .env && $EDITOR .env    # set ADMIN_TOKEN, RPC, wallet, 0x key
+git clone https://github.com/RH-WALLET/zipline.git && cd zipline && cp .env.example .env && $EDITOR .env    # set ADMIN_TOKEN, RPC, wallet, 0x key
 docker compose up -d --build
 ```
 
