@@ -65,9 +65,31 @@ test("methodology, capital, universe and log pages render from the engine", asyn
 
 test("no page scrolls sideways at phone width", async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 812 });
-  for (const path of ["/", "/strategies/TREND", "/executions", "/universe", "/events", "/methodology"]) {
+  for (const path of ["/", "/strategies/TREND", "/executions", "/universe", "/events", "/methodology", "/terminal"]) {
     await page.goto(path);
     const widths = await page.evaluate(() => ({ doc: document.documentElement.scrollWidth, view: window.innerWidth }));
     expect(widths.doc, path).toBeLessThanOrEqual(widths.view);
+  }
+});
+
+test("the terminal is the engine's own screen: stamp, live tape, quote board, nothing replayed", async ({ page }) => {
+  await page.goto("/terminal");
+  await expect(page.locator(".term-stamp")).toContainText(/demo mode|live trading|system paused/i);
+  await expect(page.locator(".term-bar")).toContainText(/UTC/);
+  await expect(page.locator(".term-bar")).toContainText(/NYSE/);
+  await expect(page.locator('section[aria-label="Tape"] .tl').first()).toBeVisible();
+  await expect(page.locator('section[aria-label="Tape"] .meta')).toContainText(/live|connecting|reconnecting/);
+  const rows = page.locator('table[aria-label="Quote board"] tbody tr');
+  expect(await rows.count()).toBeGreaterThan(0);
+  await expect(rows.first()).toContainText(/\d/);
+  await expect(page.locator(".term-foot")).toContainText("nothing narrated, nothing replayed");
+  // the tape filter narrows to trades; every dry-run line says so and carries a local id
+  await page.getByRole("button", { name: "trades" }).click();
+  await expect(page.getByRole("button", { name: "trades" })).toHaveAttribute("aria-pressed", "true");
+  const dry = page.locator(".tl.c-dry");
+  const n = await dry.count();
+  for (let i = 0; i < Math.min(n, 3); i++) {
+    await expect(dry.nth(i)).toContainText(/dry-\d+/);
+    await expect(dry.nth(i)).toContainText("DRY RUN");
   }
 });

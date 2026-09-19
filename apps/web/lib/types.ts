@@ -34,6 +34,7 @@ export type Status = {
     last_market_data_at: string | null;
     last_universe_refresh_at: string | null;
     cycle_time_et: string;
+    market?: { exchange: string; is_open: boolean; next_open: string; next_close: string };
   };
   counts: {
     strategies: number;
@@ -367,4 +368,39 @@ export type Metrics = {
   monthly: { year: number; month: number; value: number | null }[];
   intraday: { t: string; algorithm: number }[];
   note: string;
+};
+
+/** One row of the live quote board (GET /quotes). Underlying bid/ask; token values = price × multiplier. */
+export type Quote = {
+  symbol: string;
+  name: string;
+  multiplier: string;
+  eligible: boolean;
+  hold_only: boolean;
+  status: string;
+  source: "robinhood_api" | "cached_snapshot" | null;
+  bid: string | null;
+  ask: string | null;
+  mid: string | null;
+  spread_bps: string | null;
+  token_bid: string | null;
+  token_ask: string | null;
+  token_mid: string | null;
+  is_halted: boolean;
+  daily_volume: string | null;
+  generated_at: string | null;
+  fetched_at: string | null;
+  error: string | null;
+};
+
+export type QuoteBoard = {
+  fetched_at: string;
+  ttl_sec: number;
+  source: string;
+  live: number;
+  cached: number;
+  error: string | null;
+  note: string;
+  quotes: Quote[];
+  age_sec: number;
 };

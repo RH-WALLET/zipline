@@ -11,6 +11,7 @@ const LINKS: [string, string][] = [
   ["/universe", "Universe"],
   ["/events", "Log"],
   ["/methodology", "Methodology"],
+  ["/terminal", "Terminal"],
 ];
 
 /** The running head of the report: wordmark, sections, engine state; the red rule below is the brand. */

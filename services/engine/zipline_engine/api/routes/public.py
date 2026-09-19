@@ -14,7 +14,7 @@ from zipline_engine import __version__
 from zipline_engine.api import serializers as ser
 from zipline_engine.api.deps import db, settings
 from zipline_engine.config import Settings
-from zipline_engine.core.calendar import last_completed_session, next_cycle_time
+from zipline_engine.core.calendar import last_completed_session, market_state, next_cycle_time
 from zipline_engine.core.money import ZERO, D, q_money
 from zipline_engine.core.system import get_state
 from zipline_engine.db.models import (
@@ -117,6 +117,7 @@ def status_(session: Session = Depends(db), cfg: Settings = Depends(settings)) -
             "last_market_data_at": ser.j(st.last_market_data_at),
             "last_universe_refresh_at": ser.j(st.last_universe_refresh_at),
             "cycle_time_et": cfg.cycle_time_et,
+            "market": ser.j(market_state()),
         },
         "counts": {
             "strategies": len(strategies),

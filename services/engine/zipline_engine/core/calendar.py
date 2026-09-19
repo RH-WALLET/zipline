@@ -79,3 +79,19 @@ def next_cycle_time(cycle_time_et: str, now: datetime | None = None) -> datetime
 def session_index(day: date, origin: date = date(2000, 1, 3)) -> int:
     """Deterministic ordinal of a session (number of sessions since ``origin``)."""
     return len(sessions_between(origin, day)) - 1
+
+
+def market_state(now: datetime | None = None) -> dict[str, object]:
+    """Whether NYSE's regular session is open right now, and the next open/close instants (UTC)."""
+    now = now or datetime.now(UTC)
+    ts = pd.Timestamp(now).tz_convert(UTC) if now.tzinfo else pd.Timestamp(now, tz=UTC)
+    cal = nyse()
+    is_open = bool(cal.is_open_on_minute(ts))
+    next_open = cal.next_open(ts)
+    next_close = cal.next_close(ts)
+    return {
+        "exchange": "XNYS",
+        "is_open": is_open,
+        "next_open": next_open.to_pydatetime(),
+        "next_close": next_close.to_pydatetime(),
+    }

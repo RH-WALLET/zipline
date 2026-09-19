@@ -17,5 +17,7 @@ Read `README.md` for the system, `PRODUCT.md` for the brief's product truth, `DE
 
 ## Working on the web app
 - `apps/web`, pnpm; `pnpm test`, `pnpm lint`, `pnpm typecheck`, `pnpm build`; `pnpm e2e` needs the stack running.
+- Route groups: `app/(report)/*` is the paper tear sheet (masthead + colophon layout); `app/terminal` is the dark full-screen terminal with its own layout and `terminal.css`. The root layout carries only fonts and the document. `(report)/[...missing]` routes unknown paths to the report's not-found page.
+- The terminal shows only real activity: SSE events, `GET /quotes` (Robinhood bid/ask through the engine, 20 s server cache), accounting endpoints. No replays, no simulated ticks — see DESIGN.md.
 - Server components fetch the engine with `cache: "no-store"`; client components go through `/api/engine/*` (GET only) and `/api/stream` (SSE).
 - Next 16: `params` are Promises; read `node_modules/next/dist/docs` before assuming an API.

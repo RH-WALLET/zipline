@@ -11,7 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from zipline_engine import __version__
-from zipline_engine.api.routes import admin, metrics, public, stream
+from zipline_engine.api.routes import admin, metrics, public, quotes, stream
 from zipline_engine.config import get_settings
 from zipline_engine.logging_setup import configure_logging, redact
 
@@ -44,6 +44,7 @@ def create_app() -> FastAPI:
     )
     app.include_router(public.router)
     app.include_router(metrics.router)
+    app.include_router(quotes.router)
     app.include_router(stream.router)
     app.include_router(admin.router)
 

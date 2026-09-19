@@ -21,6 +21,7 @@ ZIPLINE runs that engine lineage against real markets again:
 - **Real execution** through the 0x Swap API (RFQ liquidity on Robinhood Chain), with actual fills read from the confirmed receipt's Transfer logs — a quote is never assumed to be a fill.
 - **Reconciliation** of Σ sleeve books against the real wallet after every execution and on a schedule; a break pauses live trading automatically.
 - A web interface that presents the running system as a **live tear sheet** — the pyfolio performance report of the Zipline ecosystem, typeset and fed by the engine: the full `perf_stats` table (annual return, cumulative returns, volatility, Sharpe, Calmar, stability, max drawdown, Omega, Sortino, skew, kurtosis, tail ratio, daily VaR, alpha, beta, information ratio — all computed by empyrical from real valuations, `—` where history is too short), cumulative-returns and underwater plots against SPY, 1M/3M/6M/12M rolling windows, and the accounting, sleeves, holdings, signals, crosses, executions, reconciliation and system-log ledgers as sections of one report — for the treasury and for each strategy.
+- A **terminal** (`/terminal`): the engine's own screen for watching — the live event tape over server-sent events (fills, crosses, quotes, risk checks, valuations, reconciliation), a Robinhood Stock Token quote board polled through the engine, treasury and books, UTC/ET clocks, NYSE session state and the countdown to the next cycle. Nothing on it is replayed or simulated; in demo mode it says so in the status bar.
 
 This is an independent project. It is not operated, sponsored or endorsed by Robinhood Markets, Inc. or Quantopian. The ten strategies are rule sets written for this project; they are not Quantopian algorithms. Historical bars come from a market-data provider and are underlying-equity prices, not Robinhood Chain prices.
 
@@ -227,7 +228,7 @@ The system pauses itself on `MAX_FAILED_TXS_BEFORE_PAUSE` consecutive execution 
 
 ## API
 
-`GET /health` `GET /status` `GET /treasury` `GET /treasury/history` `GET /treasury/funding` `GET /treasury/metrics` `GET /assets` `GET /strategies` `GET /strategies/{code}` `GET /strategies/{code}/{positions,history,metrics,signals,fills,crosses,executions}` `GET /signals` `GET /executions` `GET /transactions` `GET /crosses` `GET /fills` `GET /reconciliation` `GET /events` `GET /events/stream` (SSE) `GET /cycles` `GET /cycles/{id}`
+`GET /health` `GET /status` `GET /treasury` `GET /treasury/history` `GET /treasury/funding` `GET /treasury/metrics` `GET /assets` `GET /quotes` (live Robinhood bid/ask, 20 s server cache, display only) `GET /strategies` `GET /strategies/{code}` `GET /strategies/{code}/{positions,history,metrics,signals,fills,crosses,executions}` `GET /signals` `GET /executions` `GET /transactions` `GET /crosses` `GET /fills` `GET /reconciliation` `GET /events` `GET /events/stream` (SSE) `GET /cycles` `GET /cycles/{id}`
 
 Admin (`Authorization: Bearer $ADMIN_TOKEN`): `POST /admin/pause` `POST /admin/resume` `POST /admin/run-cycle` `POST /admin/reconcile` `POST /admin/revalue` `POST /admin/strategy/{code}/enable` `POST /admin/strategy/{code}/disable` `POST /admin/demo/deposit` `POST /admin/withdraw`.
 

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from datetime import date
+from decimal import Decimal
 
 import pytest
 from fastapi.testclient import TestClient
@@ -12,6 +13,7 @@ from tests.fakes import FakeProvider, FakeRobinhood
 from tests.test_integration_cycle import make_settings
 from zipline_engine.api.app import create_app
 from zipline_engine.config import get_settings
+from zipline_engine.robinhood.client import RHPrice
 from zipline_engine.runtime import build_runtime
 from zipline_engine.scheduler.bootstrap import bootstrap
 from zipline_engine.scheduler.cycle import run_cycle
@@ -177,3 +179,31 @@ def test_metrics_endpoints_are_honest_about_history(client: TestClient) -> None:
         "total_return" in s["overall"] and s["cumulative"]
     )  # one point: since-inception 0%, no ratios
     assert client.get("/strategies/NOPE/metrics").status_code == 404
+
+
+def test_quotes_board_is_live_cached_and_never_estimated(client: TestClient, monkeypatch) -> None:  # type: ignore[no-untyped-def]
+    from zipline_engine.api.routes import quotes as quotes_route
+    from zipline_engine.robinhood.client import RobinhoodAPIError
+
+    fake = FakeRobinhood(as_of=date(2026, 9, 15))
+    monkeypatch.setattr(quotes_route, "client_factory", lambda cfg: fake)
+    quotes_route._cache.update(at=0.0, payload=None)
+    q = client.get("/quotes").json()
+    assert q["live"] >= 1 and q["quotes"] and q["age_sec"] == 0.0
+    row = next(r for r in q["quotes"] if r["symbol"] == "AAPL")
+    assert row["source"] == "robinhood_api" and row["bid"] and row["ask"] and row["token_mid"]
+    assert Decimal(row["token_mid"]) == Decimal(row["mid"]) * Decimal(row["multiplier"])
+
+    class Down:
+        def get_price(self, symbol: str) -> RHPrice:
+            raise RobinhoodAPIError(f"/prices/{symbol}: HTTP 503")
+
+    # within the TTL the board is served from the cache, so a dead feed changes nothing
+    monkeypatch.setattr(quotes_route, "client_factory", lambda cfg: Down())
+    q2 = client.get("/quotes").json()
+    assert q2["live"] == q["live"] and q2["age_sec"] >= 0.0
+    # once the cache expires, rows fall back to the stored snapshots and say so; nothing is invented
+    quotes_route._cache.update(at=0.0, payload=None)
+    q3 = client.get("/quotes").json()
+    assert q3["live"] == 0 and q3["cached"] == len(q3["quotes"])
+    assert all(r["source"] == "cached_snapshot" and r["error"] for r in q3["quotes"])
