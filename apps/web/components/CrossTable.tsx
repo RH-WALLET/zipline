@@ -3,10 +3,10 @@ import { fmtMoney, fmtPrice, fmtQty, fmtTime } from "@/lib/format";
 
 /** Internal crosses: one sleeve sold to another inside the treasury. No blockchain transaction exists for these. */
 export function CrossTable({ crosses }: { crosses: Cross[] }) {
-  if (crosses.length === 0) return <p className="help" style={{ padding: 16 }}>No internal crosses yet — sleeves have not yet wanted opposite sides of the same asset.</p>;
+  if (crosses.length === 0) return <p className="footnote" style={{ fontStyle: "italic" }}>No internal crosses yet — sleeves have not yet wanted opposite sides of the same asset.</p>;
   return (
     <div className="tablewrap">
-      <table className="table">
+      <table className="data">
         <thead>
           <tr>
             <th>Time (UTC)</th>

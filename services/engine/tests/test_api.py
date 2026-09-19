@@ -158,6 +158,20 @@ def test_metrics_endpoints_are_honest_about_history(client: TestClient) -> None:
     assert t["overall"]["sharpe"] is None and t["overall"]["alpha"] is None
     assert all(v is None for v in t["windows"].values())
     assert t["intraday"] and "algorithm" in t["intraday"][0]
+    assert set(t["overall"]) >= {
+        "calmar",
+        "omega",
+        "tail_ratio",
+        "daily_var",
+        "stability",
+        "skew",
+        "kurtosis",
+    }
+    assert (
+        t["monthly"] == []
+        and isinstance(t["drawdowns"], list)
+        and isinstance(t["daily_returns"], list)
+    )
     s = client.get("/strategies/TREND/metrics").json()
     assert (
         "total_return" in s["overall"] and s["cumulative"]

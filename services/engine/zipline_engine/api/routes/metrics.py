@@ -69,31 +69,53 @@ def _benchmark_returns(session: Session, provider: str, dates: pd.Index) -> pd.S
     return close.pct_change().dropna()
 
 
+STAT_KEYS = (
+    "total_return",
+    "annual_return",
+    "volatility",
+    "sharpe",
+    "calmar",
+    "stability",
+    "max_drawdown",
+    "omega",
+    "sortino",
+    "skew",
+    "kurtosis",
+    "tail_ratio",
+    "daily_var",
+    "alpha",
+    "beta",
+    "information_ratio",
+    "benchmark_return",
+)
+
+
 def _stats(returns: pd.Series, bench: pd.Series | None) -> dict[str, float | None]:
+    """pyfolio's ``perf_stats`` set, computed by empyrical-reloaded. Missing history -> None."""
     import empyrical as ep
 
-    out: dict[str, float | None] = {
-        "total_return": None,
-        "annual_return": None,
-        "volatility": None,
-        "sharpe": None,
-        "sortino": None,
-        "max_drawdown": None,
-        "alpha": None,
-        "beta": None,
-        "information_ratio": None,
-        "benchmark_return": None,
-    }
-    if len(returns) == 0:
+    out: dict[str, float | None] = dict.fromkeys(STAT_KEYS)
+    n = len(returns)
+    if n == 0:
         return out
     out["total_return"] = _f(ep.cum_returns_final(returns))
     out["max_drawdown"] = _f(ep.max_drawdown(returns))
-    if len(returns) >= 2:
+    if n >= 2:
         out["annual_return"] = _f(ep.annual_return(returns))
         out["volatility"] = _f(ep.annual_volatility(returns))
+        out["stability"] = _f(ep.stability_of_timeseries(returns))
         if float(returns.std()) > 0:
             out["sharpe"] = _f(ep.sharpe_ratio(returns))
             out["sortino"] = _f(ep.sortino_ratio(returns))
+            out["omega"] = _f(ep.omega_ratio(returns))
+            out["tail_ratio"] = _f(ep.tail_ratio(returns))
+        if out["max_drawdown"] is not None and out["max_drawdown"] < 0:
+            out["calmar"] = _f(ep.calmar_ratio(returns))
+    if n >= 3:
+        out["skew"] = _f(returns.skew())
+        out["daily_var"] = _f(ep.value_at_risk(returns))
+    if n >= 4:
+        out["kurtosis"] = _f(returns.kurtosis())
     if bench is not None and len(bench) > 0:
         aligned = pd.concat([returns.rename("a"), bench.rename("b")], axis=1, join="inner").dropna()
         if len(aligned) >= 1:
@@ -105,6 +127,27 @@ def _stats(returns: pd.Series, bench: pd.Series | None) -> dict[str, float | Non
             if float((aligned["a"] - aligned["b"]).std()) > 0:
                 out["information_ratio"] = _f(ep.excess_sharpe(aligned["a"], aligned["b"]))
     return out
+
+
+def _monthly(returns: pd.Series) -> list[dict[str, Any]]:
+    """Monthly compounded returns for the heatmap; empty until a month has completed sessions."""
+    import empyrical as ep
+
+    if len(returns) < 2:
+        return []
+    agg = ep.aggregate_returns(returns, "monthly")
+    return [{"year": int(y), "month": int(m), "value": _f(v)} for (y, m), v in agg.items()]
+
+
+def _drawdowns(index: pd.Series) -> list[dict[str, Any]]:
+    if len(index) == 0:
+        return []
+    peak = index.cummax()
+    dd = index / peak - 1
+    return [
+        {"date": pd.Timestamp(str(d)).date().isoformat(), "drawdown": float(v) * 100}
+        for d, v in dd.items()
+    ]
 
 
 def _report(index: pd.Series, bench_returns: pd.Series, intraday: Sequence[Any]) -> dict[str, Any]:
@@ -147,12 +190,19 @@ def _report(index: pd.Series, bench_returns: pd.Series, intraday: Sequence[Any])
                     "algorithm": (float(v) / base_i - 1) * 100 if base_i else 0.0,
                 }
             )
+    daily_returns = [
+        {"date": pd.Timestamp(str(d)).date().isoformat(), "value": float(v) * 100}
+        for d, v in returns.items()
+    ]
     return {
         "sessions": int(len(returns)),
         "benchmark": BENCHMARK,
         "overall": overall,
         "windows": windows,
         "cumulative": cumulative,
+        "drawdowns": _drawdowns(index),
+        "daily_returns": daily_returns,
+        "monthly": _monthly(returns),
         "intraday": intraday_pts,
         "note": "returns are time-weighted (flows excluded); benchmark is SPY underlying close-to-close; statistics by empyrical-reloaded; null means not enough history",
     }

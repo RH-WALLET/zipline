@@ -7,15 +7,16 @@ import { Chip } from "@/components/Chip";
 import { CrossTable } from "@/components/CrossTable";
 import { ExecutionTable } from "@/components/ExecutionTable";
 import { KV } from "@/components/KV";
-import { Panel } from "@/components/Panel";
+import { ReportTitle } from "@/components/ReportTitle";
+import { Contents, Section } from "@/components/Section";
 import { SignalTable } from "@/components/SignalTable";
-import { Tabs } from "@/components/Tabs";
 import { Unavailable } from "@/components/Unavailable";
 
 type CycleDetail = { cycle: Cycle; signals: Signal[]; internal_crosses: Cross[]; executions: Execution[]; events: SystemEvent[] };
 
 export default async function CyclePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  const status = await settle(api.status());
   let detail: CycleDetail | null = null;
   try {
     const r = await fetch(`${ENGINE_URL}/cycles/${encodeURIComponent(id)}`, { cache: "no-store" });
@@ -25,13 +26,10 @@ export default async function CyclePage({ params }: { params: Promise<{ id: stri
     detail = null;
   }
   if (!detail) {
-    const status = await settle(api.status());
     if (!status) {
       return (
-        <div className="container">
-          <div className="report-head">
-            <h1>Cycle {id}</h1>
-          </div>
+        <div className="page">
+          <ReportTitle kicker="ZIPLINE · cycle" title={`Cycle ${id}`} status={status} />
           <Unavailable />
         </div>
       );
@@ -41,64 +39,73 @@ export default async function CyclePage({ params }: { params: Promise<{ id: stri
   const c = detail.cycle;
   const summary = c.summary as Record<string, string | number | string[]>;
   return (
-    <div className="container">
-      <div className="crumbs">
-        <Link href="/events">Logs</Link> › cycle #{c.id}
-      </div>
-      <div className="report-head">
-        <div>
-          <h1>
-            Cycle #{c.id} <span className="sub">— session {c.session_date}</span>
-          </h1>
-          <div className="meta">
-            started {fmtTime(c.started_at)} · finished {fmtTime(c.finished_at)} · NAV at start {String(summary.nav_start ?? "—")} · at end {String(summary.nav_end ?? "—")}
-          </div>
-        </div>
-        <div className="actions">
-          <Chip tone={statusClass(c.status)}>{c.status}</Chip>
-          <Chip tone={c.mode === "LIVE" ? "green" : "amber"}>{c.mode.replace("_", " ")}</Chip>
-        </div>
-      </div>
-      {c.error ? (
-        <div className="callout danger">
-          <pre className="code" style={{ margin: 0, background: "transparent", border: 0, padding: 0, whiteSpace: "pre-wrap" }}>{c.error}</pre>
-        </div>
-      ) : null}
-      <Tabs
-        tabs={[
-          {
-            id: "summary",
-            label: "Summary",
-            content: (
-              <div className="grid-2">
-                <Panel title="Cycle record" flush>
-                  <div className="body">
-                    <KV rows={Object.entries(summary).map(([k, v]) => ({ label: k, value: Array.isArray(v) ? v.join(" ") : String(v), left: Array.isArray(v) }))} />
-                  </div>
-                </Panel>
-                <div className="console" aria-label="Cycle event trail">
-                  <div className="bar">
-                    <span>event trail · {detail.events.length} lines</span>
-                  </div>
-                  <div className="lines" style={{ maxHeight: 520 }}>
-                    {detail.events.map((e) => (
-                      <span key={e.id} className={`ln ${e.level === "WARN" ? "warn" : e.level === "ERROR" ? "error" : ""}`}>
-                        <span className="ts">{fmtTime(e.created_at)}</span>
-                        {"  "}
-                        <span className={`ty ${e.level === "WARN" ? "warn" : e.level === "ERROR" ? "error" : ""}`}>{e.type.padEnd(26)}</span> <span className="msg">{e.message}</span>
-                        {"\n"}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            ),
-          },
-          { id: "signals", label: "Signals", count: detail.signals.length, content: <Panel title="Signals" meta="SIGNAL" flush><SignalTable signals={detail.signals} /></Panel> },
-          { id: "crosses", label: "Internal crosses", count: detail.internal_crosses.length, content: <Panel title="Internal crosses" meta="INTERNAL_CROSS — no blockchain transaction" flush><CrossTable crosses={detail.internal_crosses} /></Panel> },
-          { id: "orders", label: "Net external orders", count: detail.executions.length, content: <Panel title="Net external orders" meta="ONCHAIN_EXECUTION / DRY RUN" flush><ExecutionTable executions={detail.executions} /></Panel> },
+    <div className="page">
+      <ReportTitle
+        kicker={`ZIPLINE · cycle audit trail · session ${c.session_date}`}
+        title={`Cycle #${c.id}`}
+        sub={`session ${c.session_date}`}
+        lede="Everything this cycle did, in order: universe and data refresh, ten strategy runs, netting into internal crosses and net external orders, execution, marking, reconciliation."
+        facts={[
+          <>
+            <Chip tone={statusClass(c.status)}>{c.status}</Chip> <Chip tone={c.mode === "LIVE" ? "green" : "amber"}>{c.mode.replace("_", " ")}</Chip>
+          </>,
+          <>
+            started <b>{fmtTime(c.started_at)}</b>
+          </>,
+          <>
+            finished <b>{fmtTime(c.finished_at)}</b>
+          </>,
+          <>
+            NAV <b>{String(summary.nav_start ?? "—")} → {String(summary.nav_end ?? "—")}</b>
+          </>,
+        ]}
+        status={status}
+      />
+      <Contents
+        items={[
+          ["summary", "Summary"],
+          ["trail", "Event trail"],
+          ["signals", "Signals"],
+          ["crosses", "Internal crosses"],
+          ["orders", "Net external orders"],
         ]}
       />
+      {c.error ? (
+        <div className="callout danger">
+          <pre className="code" style={{ border: 0, padding: 0, whiteSpace: "pre-wrap" }}>{c.error}</pre>
+        </div>
+      ) : null}
+      <Section id="summary" title="Summary" note="from the cycle record">
+        <div className="cols even">
+          <KV rows={Object.entries(summary).map(([k, v]) => ({ label: k, value: Array.isArray(v) ? v.join(" ") : String(v), left: Array.isArray(v) }))} />
+        </div>
+      </Section>
+      <Section id="trail" title="Event trail" note={`${detail.events.length} events`}>
+        <div className="log">
+          <div className="lines" style={{ maxHeight: 520 }}>
+            {detail.events.map((e) => (
+              <span key={e.id} className={`ln ${e.level === "WARN" ? "warn" : e.level === "ERROR" ? "error" : ""}`}>
+                <span className="ts">{fmtTime(e.created_at)}</span>
+                {"  "}
+                <span className={`ty ${e.level === "WARN" ? "warn" : e.level === "ERROR" ? "error" : ""}`}>{e.type.padEnd(26)}</span> <span className="msg">{e.message}</span>
+                {"\n"}
+              </span>
+            ))}
+          </div>
+        </div>
+      </Section>
+      <Section id="signals" title="Signals" note="SIGNAL">
+        <SignalTable signals={detail.signals} />
+      </Section>
+      <Section id="crosses" title="Internal crosses" note="INTERNAL_CROSS — no blockchain transaction">
+        <CrossTable crosses={detail.internal_crosses} />
+      </Section>
+      <Section id="orders" title="Net external orders" note="ONCHAIN_EXECUTION / DRY RUN">
+        <ExecutionTable executions={detail.executions} />
+      </Section>
+      <p className="footnote">
+        <Link href="/events">← Log</Link>
+      </p>
     </div>
   );
 }

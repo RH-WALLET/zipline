@@ -48,7 +48,7 @@ describe("status pills", () => {
         <Chip>WATCH</Chip>
       </>,
     );
-    expect(screen.getByText("DEMO MODE")).toHaveClass("pill", "warning");
+    expect(screen.getByText("DEMO MODE")).toHaveClass("tag", "warning");
     expect(screen.getByText("ACTIVE")).toHaveClass("success");
     expect(screen.getByText("FAILED")).toHaveClass("danger");
     expect(screen.getByText("WATCH")).toHaveClass("warning");
@@ -111,7 +111,7 @@ describe("ExecutionTable", () => {
     expect(screen.getByText("ONCHAIN")).toBeInTheDocument();
     const link = screen.getAllByRole("link").find((a) => a.getAttribute("href")?.includes("blockscout"));
     expect(link).toBeDefined();
-    expect(screen.getByText("777")).toBeInTheDocument();
+    expect(screen.getByText("block 777")).toBeInTheDocument();
   });
 });
 

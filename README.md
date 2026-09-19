@@ -20,14 +20,14 @@ ZIPLINE runs that engine lineage against real markets again:
 - **Netting**: sleeve targets are netted before anything touches the chain. Overlapping buys and sells are crossed internally (`INTERNAL_CROSS`, no transaction); only the residual per asset is executed (`ONCHAIN_EXECUTION`).
 - **Real execution** through the 0x Swap API (RFQ liquidity on Robinhood Chain), with actual fills read from the confirmed receipt's Transfer logs — a quote is never assumed to be a fill.
 - **Reconciliation** of Σ sleeve books against the real wallet after every execution and on a schedule; a break pauses live trading automatically.
-- A web interface that presents the running system as **backtest reports in the language of the Quantopian platform** that ran Zipline: the red navbar, a nine-statistic strip (Total Returns · Benchmark Returns · Alpha · Beta · Sharpe · Sortino · Information Ratio · Volatility · Max Drawdown, all computed by empyrical from real valuations), the algorithm-vs-SPY cumulative chart, Performance / Positions / Transactions / Logs / Source tabs, the 1M/3M/6M/12M risk table, and the dark log console — for the treasury and for each strategy.
+- A web interface that presents the running system as a **live tear sheet** — the pyfolio performance report of the Zipline ecosystem, typeset and fed by the engine: the full `perf_stats` table (annual return, cumulative returns, volatility, Sharpe, Calmar, stability, max drawdown, Omega, Sortino, skew, kurtosis, tail ratio, daily VaR, alpha, beta, information ratio — all computed by empyrical from real valuations, `—` where history is too short), cumulative-returns and underwater plots against SPY, 1M/3M/6M/12M rolling windows, and the accounting, sleeves, holdings, signals, crosses, executions, reconciliation and system-log ledgers as sections of one report — for the treasury and for each strategy.
 
 This is an independent project. It is not operated, sponsored or endorsed by Robinhood Markets, Inc. or Quantopian. The ten strategies are rule sets written for this project; they are not Quantopian algorithms. Historical bars come from a market-data provider and are underlying-equity prices, not Robinhood Chain prices.
 
 ## Architecture
 
 ```
-apps/web              Next.js 16 · TypeScript · Tailwind      Quantopian-style backtest-report interface
+apps/web              Next.js 16 · TypeScript · Tailwind      live tear-sheet interface (pyfolio report, set live)
 services/engine       Python 3.12 · FastAPI · SQLAlchemy       the engine
   zipline_engine/
     strategies/       ten Strategy implementations + registry (pure, deterministic)

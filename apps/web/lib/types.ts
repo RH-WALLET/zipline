@@ -341,8 +341,15 @@ export type MetricSet = {
   annual_return: number | null;
   volatility: number | null;
   sharpe: number | null;
-  sortino: number | null;
+  calmar: number | null;
+  stability: number | null;
   max_drawdown: number | null;
+  omega: number | null;
+  sortino: number | null;
+  skew: number | null;
+  kurtosis: number | null;
+  tail_ratio: number | null;
+  daily_var: number | null;
   alpha: number | null;
   beta: number | null;
   information_ratio: number | null;
@@ -355,6 +362,9 @@ export type Metrics = {
   overall: MetricSet;
   windows: Record<"1M" | "3M" | "6M" | "12M", MetricSet | null>;
   cumulative: { date: string; algorithm: number; benchmark?: number }[];
+  drawdowns: { date: string; drawdown: number }[];
+  daily_returns: { date: string; value: number }[];
+  monthly: { year: number; month: number; value: number | null }[];
   intraday: { t: string; algorithm: number }[];
   note: string;
 };

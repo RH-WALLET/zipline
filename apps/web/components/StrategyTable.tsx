@@ -7,7 +7,7 @@ import { Pct } from "./Signed";
 export function StrategyTable({ strategies }: { strategies: Strategy[] }) {
   return (
     <div className="tablewrap">
-      <table className="table">
+      <table className="data">
         <thead>
           <tr>
             <th>Strategy</th>

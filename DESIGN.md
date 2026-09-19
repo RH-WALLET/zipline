@@ -1,45 +1,49 @@
 # DESIGN.md — ZIPLINE web interface
 
-_Visual authority for `apps/web`. Third and current direction (2026-09-18): a **backtest-results console in the language of the Quantopian platform** that ran Zipline. Values were measured on the archived quantopian.com (2016) — `#C50000` red navbar, white pages on `#F4F5F6`, `#333` text in an Open-Sans-class sans, blue links, `#1E2024` dark console panels — and the page structure follows Quantopian's embedded backtest report exactly: statistics strip (Total Returns · Benchmark Returns · Alpha · Beta · Sharpe · Sortino · Information Ratio · Volatility · Max Drawdown), algorithm-vs-benchmark cumulative chart, Performance / Positions / Transactions / Logs / Source tabs, 1M/3M/6M/12M risk-metrics table. Same data as before; the earlier dark-terminal and Read-the-Docs renditions were rejected by the operator._
+_Visual authority for `apps/web`. Fourth and current direction (2026-09-19): a **live tear sheet**. The iconic artifact of the Zipline/Quantopian ecosystem was never a dashboard — it was the pyfolio tear sheet: a typeset performance report with a statistics table and restrained matplotlib plots. Every page here is that report, set live from the running engine. Earlier renditions (dark terminal, Read-the-Docs clone, Quantopian red-navbar console) were rejected by the operator and are anti-references: no chrome, no panels, no tabs, no boxes._
 
 ## World
-- Every page is a **backtest report of something that is actually running**. Mode: Operate. Density is high but the report hierarchy is always the same: report head → statistics → curve → tabs.
-- Light. The Quantopian platform was light with one strong brand colour.
+- **Paper, not screen.** Warm paper background, ink text, hairline rules. The page reads top-to-bottom like a printed report; the only "UI" is the running head and a contents line. Mode: Operate for the ledgers, Read for methodology — both inside the same report grammar.
+- **One brand cue.** The Quantopian red (`#c50000`) appears exactly twice: the 4px rule under the masthead and the rotated document stamp that names the mode. Nothing else is red except negative numbers and errors (a different, deeper red).
+- **The story:** a reader opens what looks like a printed quant report and finds it is alive — the log streams, valuations tick, the stamp says DEMO MODE.
 
 ## Colour
 ```
---q-red      #c50000   navbar (the brand cue)          --q-red-dark  #a30000
---q-ink      #333333   text                             --q-ink-2     #555b61  secondary
---q-muted    #8a9096   labels, meta                     --q-faint     #b8bec4  n/a values
---q-bg       #f4f5f6   app background                   --q-panel     #ffffff  panels
---q-border   #e1e4e8   panel borders                    --q-border-2  #d0d5da  tab borders
---q-blue     #2a7ab8   links, algorithm line            --q-green     #2e9e4f  positive / online
---q-amber    #c77c00   warnings, DEMO mode (bg #fff6df) --q-danger    #c8302a  negative / failed / paused
---q-console  #1e2024   log console (bar #26282d)        benchmark line #9aa0a6
+--paper   #faf9f6  page            --paper-2  #f3f1ec  hover rows, code tint
+--ink     #16181d  text            --ink-2    #3d4149  secondary text, labels
+--muted   #6b6f76  notes, axes     --faint    #a9adb4  "—" not-enough-history values
+--rule    #dcd8cf  hairlines       --rule-2   #c9c4b9  heavier rules (section heads)
+--brand   #c50000  masthead rule + stamp (Quantopian red)
+--navy    #1f4e79  algorithm line, links, INFO events    --bench  #9a9a9a  benchmark line
+--pos     #1d7a46  gains, ONCHAIN, ELIGIBLE               --neg    #b42318  losses, drawdown fill, errors
+--warn    #9a6700  DRY RUN, HOLD ONLY, WARN events
 ```
-Pills: `.pill.success / .warning / .danger / .info` — tinted backgrounds with matching borders, 11px uppercase semibold. Positive numbers green, negative red, only where the sign carries meaning (returns, PnL).
+Sign colours only where the sign carries meaning (returns, PnL, drawdown). Tags (`.tag`) are outlined, never filled: `success / warning / danger / info`.
 
 ## Type
-- **Open Sans** 14px / 20px body (Quantopian's fallback for FF Sero), weights 400/600/700. Report H1 24px/600; panel titles 15px/600; stat values 22px/600 tabular; labels 11px uppercase 0.06em muted.
-- Monospace (Menlo/Monaco/Consolas) for ids, hashes, timestamps, signal kinds, code blocks and the log console. All numeric columns `font-variant-numeric: tabular-nums`, right-aligned.
+- **Source Serif 4** for words and headline figures: body 15px/1.5, report H1 40px/1.05 (600) with the subtitle in muted 400, section H2 22px, hero statistic 24px, KV big value 22px, lede 16.5px. H1 uses `text-wrap: balance`.
+- **Red Hat Mono** for data: table cells, kickers, section notes, facts, tags, axes, log — 11–13px with `tabular-nums`; uppercase + tracking (0.08–0.12em) only for kickers, column headers and tags.
+- Paired facts stack inside one cell: the primary value on the first line, the secondary in `.sub` (11.5px muted mono) — executed over requested, effective over reference price, time over date. Column headers stack the same way.
 
 ## Layout
-- `header.q-nav` 56px red bar: white logo box with a red "Z", `ZIPLINE` wordmark, section links (active = white 3px underline), right side ONLINE/PAUSED dot + CHAIN id. Collapses to a hamburger under 960px.
-- `.mode-bar` directly under it, full width, always present: amber **DEMO MODE — LIVE TRADING DISABLED** with the one-line explanation and a link to the methodology; green for LIVE TRADING; red for SYSTEM PAUSED / ENGINE UNREACHABLE.
-- `.container` 1320px; `.container.narrow` 880px for prose (methodology).
-- `.report-head`: H1 with a muted `— subtitle`, a meta line (running since · base capital · sessions · benchmark · engine version · last cycle), and status pills on the right.
-- `.stats`: white strip, cells `repeat(auto-fit, minmax(128px, 1fr))`, label / value / sub. Null statistics render `—` in `--q-faint` with "needs more history"; nothing is estimated.
-- `.panel`: white, 1px border, 4px radius, titled head with a muted note, optional foot link. `.grid-2` for side-by-side panels (stacks under 960px).
-- `.tabs`: Bootstrap-era tabs (white active tab joined to its pane), URL-hash state; all panes rendered so the page stays searchable.
-- Tables `.table`: uppercase muted headers with a 2px bottom rule, 1px `#eef0f2` row rules, `#f9fafb` hover, symbols bold, ids in mono; wide tables scroll inside `.tablewrap`.
-- `.kv`: two-column ledger (label muted left, tabular value right).
-- `.console`: dark log block with a title bar (live dot, line count) and coloured levels — INFO blue, WARN amber, ERROR red — used for the event log and cycle trails.
+- `.masthead`: wordmark `ZIPLINE` + small "live tear sheet", section links (active = 2px navy underline), engine state at right (online/paused/offline dot · chain · dry run/live trading); 4px red rule beneath. Wraps to three lines under 760px.
+- `.page` 1180px (32px gutters; 20px on phones); `.page.narrow` 820px for methodology.
+- `.report-title`: kicker (mono uppercase) → H1 with `— subtitle` → lede (max 68ch) → `.facts` (mono key/value pairs) → hairline. The `.stamp` sits top-right (rotated −2°, red outline, "DEMO MODE / live trading disabled · dry run"; green for LIVE TRADING; deeper red −4° for SYSTEM PAUSED / ENGINE UNREACHABLE). On phones the stamp drops under the facts, left-aligned.
+- `.contents`: one mono line of anchor links to the sections. Sections have `scroll-margin-top`.
+- `.section`: serif H2 on a heavy hairline with a mono `.note` at the right; `.cols` = 5/7 grid (statistics table beside plots), `.cols.even` = 1/1; both stack under 900px.
+- `table.stats`: pyfolio `perf_stats` — hero row (serif 24px), then groups Returns / Risk-adjusted / Distribution / Versus benchmark; label serif left, value mono right; `td.na` renders `—` in faint. The footnote states how many completed sessions exist and that nothing is estimated.
+- `table.data`: mono uppercase headers on a heavy hairline, hairline rows, paper-2 hover, symbols bold, `.num` right-aligned, `.wrap` for prose-like cells, `.dense` variant. Tables are designed to fit 1116px without a scrollbar (stacked cells, merged columns); on phones they scroll inside `.tablewrap`.
+- `.kv`: two-column ledger (serif label, mono value; `.big` serif 22px).
+- `.log`: the system log as a printed appendix — a mono grid per line (`20ch` time · `26ch` type · message, wrapping), live dot + line count in a thin bar, INFO navy / WARN amber / ERROR red.
+- `.colophon`: three mono columns (project, engine versions, chain links) on a hairline.
 
-## Charts (`PerfChart`)
-- Cumulative performance in percent with the axis on the right (as Quantopian's Highstock chart), dotted horizontal grid, solid zero line, algorithm `#2a7ab8` 2px, benchmark `#9aa0a6` 1.5px, crosshair + tooltip on hover. Before the first completed session the intraday valuations are plotted and the legend says so; the benchmark appears once a daily series exists. NAV curves use the same component with dollar formatting.
+## Plots (`PerfChart`, `TearPlots`)
+- No frame; faint horizontal grid, solid grey zero line, right-hand axis, mono 11px ticks that never scale (the viewBox tracks the rendered width via ResizeObserver). Algorithm navy 1.6px, benchmark grey 1.2px, drawdown red 1.2px with a 14% fill (underwater plot), NAV navy with dollar axis. Crosshair + paper tooltip on hover.
+- Figures carry a mono legend line above and a mono caption below saying exactly what is plotted; before the first completed session the intraday valuations are plotted and the caption says so. Daily and monthly plots are replaced by one italic footnote until a session exists.
 
 ## Motion
-- Hover states and the chart crosshair only. No page-load animation, no boot sequence.
+- Hover states and the chart crosshair only. No page-load animation.
 
 ## Copy
-- Report vocabulary: "Total returns", "Benchmark returns", "Risk metrics", "Positions", "Transactions", "Source". System nouns in `code`. SIGNAL / INTERNAL_CROSS / ONCHAIN_EXECUTION always distinguished; DRY RUN rows say "no tx (dry run)". Contributions are never called returns.
+- Report vocabulary from pyfolio/Quantopian: "Cumulative returns", "Underwater plot", "Annual volatility", "Rolling windows". System nouns in `code`. SIGNAL / INTERNAL_CROSS / ONCHAIN_EXECUTION always distinguished; DRY RUN rows say "no tx (dry run)" and carry `dry-000042` ids. Contributions and withdrawals are flows, never returns. Nothing is narrated; the log is the engine's own events.
+- Print stylesheet: masthead links, contents, log bar and tooltips hidden; the page prints as the report it resembles.

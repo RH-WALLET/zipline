@@ -11,14 +11,14 @@ function summarize(details: Record<string, unknown>): string {
     else if (typeof v === "string" && v.length < 24) parts.push(`${k}=${v}`);
     else if (Array.isArray(v) && v.length < 5) parts.push(`${k}=${v.join("|")}`);
   }
-  return parts.slice(0, 6).join("  ");
+  return parts.slice(0, 6).join(" · ");
 }
 
 export function SignalTable({ signals, showStrategy = true }: { signals: Signal[]; showStrategy?: boolean }) {
-  if (signals.length === 0) return <p className="help" style={{ padding: 16 }}>No signals yet — run a cycle.</p>;
+  if (signals.length === 0) return <p className="footnote" style={{ fontStyle: "italic" }}>No signals yet — run a cycle.</p>;
   return (
     <div className="tablewrap">
-      <table className="table">
+      <table className="data">
         <thead>
           <tr>
             <th>Time (UTC)</th>
@@ -55,7 +55,9 @@ export function SignalTable({ signals, showStrategy = true }: { signals: Signal[
                 )}
               </td>
               <td className="mono muted">{s.version_hash.slice(0, 8)}</td>
-              <td className="mono muted">{summarize(s.details)}</td>
+              <td className="mono muted wrap" style={{ minWidth: "30ch" }}>
+                {summarize(s.details)}
+              </td>
             </tr>
           ))}
         </tbody>

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { api, settle } from "@/lib/api";
+import { ReportTitle } from "@/components/ReportTitle";
 
 function Rule({ k, v }: { k: string; v: unknown }) {
   const text = typeof v === "object" && v !== null ? JSON.stringify(v) : String(v);
@@ -18,11 +19,9 @@ export default async function MethodologyPage() {
   const details = await Promise.all((strategies ?? []).map((s) => settle(api.strategy(s.code))));
 
   return (
-    <div className="container narrow">
-      <div className="panel" style={{ padding: "8px 32px 24px" }}>
-        <div className="prose">
-      <h1>Methodology</h1>
-      <p className="muted">What this is, where it comes from, and exactly how the numbers on the other pages are produced.</p>
+    <div className="page narrow">
+      <ReportTitle kicker="ZIPLINE · methodology" title="Methodology" lede="What this is, where it comes from, and exactly how the numbers on the other pages are produced." status={status} />
+      <div className="prose">
       <div className="callout">
         <strong>Independent project.</strong> ZIPLINE is not operated, sponsored or endorsed by Robinhood Markets, Inc. or Quantopian. It uses the open-source Zipline lineage and Robinhood&apos;s public Stock Token infrastructure.
       </div>
@@ -208,7 +207,6 @@ export default async function MethodologyPage() {
         </tbody>
       </table>
       <p className="muted">Nothing on this site is investment advice. The treasury can lose money; a control strategy that picks at random is part of the experiment precisely so the rule-based sleeves can be compared against chance.</p>
-        </div>
       </div>
     </div>
   );

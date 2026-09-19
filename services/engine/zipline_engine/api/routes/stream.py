@@ -53,6 +53,9 @@ async def events_stream(
 ) -> EventSourceResponse:
     async def gen() -> AsyncIterator[dict[str, Any]]:
         last = after_id if after_id is not None else await asyncio.to_thread(_latest_id)
+        # Open the stream with a heartbeat so proxies flush headers and the browser's
+        # EventSource reports "open" immediately instead of after the first idle interval.
+        yield {"event": "heartbeat", "data": json.dumps({"last_id": last})}
         idle = 0
         while True:
             if await request.is_disconnected():
